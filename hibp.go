@@ -95,7 +95,8 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 	// build list of sha1sums (must be sorted later!) for stream comparison
 	sortedShaSums := make([]string, 0, len(shaSums))
 	// display progress bar
-	bar := termio.NewProgressBar(int64(len(pwList)), ctxutil.IsHidden(ctx))
+	bar := termio.NewProgressBar(int64(len(pwList)))
+	bar.Hidden = ctxutil.IsHidden(ctx)
 
 	fmt.Println("Computing SHA1 hashes of all your secrets ...")
 	for _, secret := range pwList {

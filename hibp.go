@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"sort"
 
+	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
+	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/debug"
 	"github.com/gopasspw/gopass/pkg/gopass"
-	hibpapi "github.com/gopasspw/gopass/pkg/hibp/api"
-	hibpdump "github.com/gopasspw/gopass/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/termio"
 
 	"github.com/fatih/color"

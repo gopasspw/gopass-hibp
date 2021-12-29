@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/gopasspw/gopass/pkg/debug"
 )
 

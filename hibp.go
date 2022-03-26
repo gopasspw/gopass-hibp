@@ -6,21 +6,20 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/fatih/color"
 	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/debug"
 	"github.com/gopasspw/gopass/pkg/gopass"
 	"github.com/gopasspw/gopass/pkg/termio"
-
-	"github.com/fatih/color"
 )
 
 type hibp struct {
 	gp gopass.Store
 }
 
-// CheckAPI checks your secrets against the HIBPv2 API
+// CheckAPI checks your secrets against the HIBPv2 API.
 func (s *hibp) CheckAPI(ctx context.Context, force bool) error {
 	if !force && !termio.AskForConfirmation(ctx, "This command is checking all your secrets against the haveibeenpwned.com API.\n\nThis will send five bytes of each passwords SHA1 hash to an untrusted server!\n\nYou will be asked to unlock all your secrets!\nDo you want to continue?") {
 		return fmt.Errorf("user aborted")
@@ -39,6 +38,7 @@ func (s *hibp) CheckAPI(ctx context.Context, force bool) error {
 		freq, err := hibpapi.Lookup(shaSum)
 		if err != nil {
 			fmt.Printf("Failed to check HIBP API: %s\n", err)
+
 			continue
 		}
 		if freq < 1 {
@@ -52,7 +52,7 @@ func (s *hibp) CheckAPI(ctx context.Context, force bool) error {
 	return s.printMatches(matchList)
 }
 
-// CheckDump checks your secrets against the provided HIBPv2 Dumps
+// CheckDump checks your secrets against the provided HIBPv2 Dumps.
 func (s *hibp) CheckDump(ctx context.Context, force bool, dumps []string) error {
 	fmt.Println("Using the HIBPv2 dumps is very expensive. If you can condone leaking a few bits of entropy per secret you should probably use the '--api' flag.")
 
@@ -67,7 +67,7 @@ func (s *hibp) CheckDump(ctx context.Context, force bool, dumps []string) error 
 
 	scanner, err := hibpdump.New(dumps...)
 	if err != nil {
-		return fmt.Errorf("failed to create new HIBP Dump scanner: %s", err)
+		return fmt.Errorf("failed to create new HIBP Dump scanner: %w", err)
 	}
 
 	matchedSums := scanner.LookupBatch(ctx, sortedShaSums)
@@ -116,6 +116,7 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 		sec, err := s.gp.Get(ctx, secret, "latest")
 		if err != nil {
 			fmt.Printf("\n" + color.YellowString("Failed to retrieve secret '%s': %s\n", secret, err))
+
 			continue
 		}
 
@@ -140,6 +141,7 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 func (s *hibp) printMatches(matchList []string) error {
 	if len(matchList) < 1 {
 		fmt.Println("Good news - No matches found!")
+
 		return nil
 	}
 
@@ -149,11 +151,13 @@ func (s *hibp) printMatches(matchList []string) error {
 		fmt.Printf("\t- %s\n", m)
 	}
 	fmt.Println("The passwords in the listed secrets were included in public leaks in the past. This means they are likely included in many word-list attacks and provide only very little security. Strongly consider changing those passwords!")
+
 	return fmt.Errorf("weak passwords found")
 }
 
 func sha1hex(data string) string {
 	h := sha1.New()
 	_, _ = h.Write([]byte(data))
+
 	return fmt.Sprintf("%X", h.Sum(nil))
 }

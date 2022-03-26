@@ -40,6 +40,7 @@ func New(dumps ...string) (*Scanner, error) {
 	if len(ok) < 1 {
 		return nil, fmt.Errorf("no valid dumps given")
 	}
+
 	return &Scanner{
 		dumps: ok,
 	}, nil
@@ -64,12 +65,14 @@ func (s *Scanner) LookupBatch(ctx context.Context, in []string) []string {
 	for _, fn := range s.dumps {
 		go s.scanFile(ctx, fn, in, results, done)
 	}
+
 	go func() {
 		for result := range results {
 			out = append(out, result)
 		}
 		done <- struct{}{}
 	}()
+
 	for range s.dumps {
 		<-done
 	}
@@ -87,6 +90,7 @@ func (s *Scanner) scanFile(ctx context.Context, fn string, in []string, results 
 	if isSorted(fn) {
 		debug.Log("file %s appears to be sorted", fn)
 		s.scanSortedFile(ctx, fn, in, results)
+
 		return
 	}
 	debug.Log("file %s is not sorted", fn)
@@ -133,6 +137,7 @@ func isSorted(fn string) bool {
 		}
 		lastLine = line
 	}
+
 	return true
 }
 
@@ -141,6 +146,7 @@ func (s *Scanner) scanSortedFile(ctx context.Context, fn string, in []string, re
 	fh, err := os.Open(fn)
 	if err != nil {
 		fmt.Printf("Failed to open file %s: %s", fn, err)
+
 		return
 	}
 	defer func() {
@@ -152,6 +158,7 @@ func (s *Scanner) scanSortedFile(ctx context.Context, fn string, in []string, re
 		gzr, err := gzip.NewReader(fh)
 		if err != nil {
 			fmt.Printf("Failed to open the file %s: %s", fn, err)
+
 			return
 		}
 		defer func() {
@@ -190,6 +197,7 @@ SCAN:
 			numMatches++
 			// advance to next sha sum from store and next line in file
 			i++
+
 			continue
 		}
 		// advance in sha sums from store until we've reached the position in
@@ -207,6 +215,7 @@ func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, 
 	fh, err := os.Open(fn)
 	if err != nil {
 		fmt.Printf("Failed to open file %s: %s", fn, err)
+
 		return
 	}
 	defer func() {
@@ -218,6 +227,7 @@ func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, 
 		gzr, err := gzip.NewReader(fh)
 		if err != nil {
 			fmt.Printf("Failed to open the file %s: %s", fn, err)
+
 			return
 		}
 		defer func() {
@@ -275,6 +285,7 @@ LINE:
 		for _, candidate := range in {
 			if candidate == hash {
 				results <- hash
+
 				continue LINE
 			}
 		}

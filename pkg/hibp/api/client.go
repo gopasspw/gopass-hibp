@@ -62,9 +62,11 @@ func Lookup(shaSum string) (uint64, error) {
 			}
 			if iv, err := strconv.ParseUint(line[36:], 10, 64); err == nil {
 				count = iv
+
 				return nil
 			}
 		}
+
 		return nil
 	}
 
@@ -72,5 +74,6 @@ func Lookup(shaSum string) (uint64, error) {
 	bo.MaxElapsedTime = 10 * time.Second
 
 	err := backoff.Retry(op, bo)
+
 	return count, err
 }

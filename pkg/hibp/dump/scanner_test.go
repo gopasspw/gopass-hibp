@@ -22,6 +22,7 @@ const testHibpSampleSorted = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 0000000CAEF405439D57847A8657218C618160B2:42
 0000000FC1C08E6454BED24F463EA2129E254D43:42
 00000010F4B38525354491E099EB1796278544B1`
+
 const testHibpSampleUnsorted = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 00000000A8DAE4228F821FB418F59826079BF368:42
 00000008CD1806EB7B9B46A8F87690B2AC16F617:42
@@ -49,6 +50,8 @@ func Example() {
 }
 
 func TestScanner(t *testing.T) {
+	t.Parallel()
+
 	td, err := os.MkdirTemp("", "gopass-")
 	require.NoError(t, err)
 
@@ -64,7 +67,7 @@ func TestScanner(t *testing.T) {
 
 	// setup file and env (sorted)
 	fn := filepath.Join(td, "dump.txt")
-	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleSorted), 0644))
+	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleSorted), 0o644))
 
 	scanner, err := New(fn)
 	assert.NoError(t, err)
@@ -72,7 +75,7 @@ func TestScanner(t *testing.T) {
 
 	// setup file and env (unsorted)
 	fn = filepath.Join(td, "dump.txt")
-	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleUnsorted), 0644))
+	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleUnsorted), 0o644))
 
 	scanner, err = New(fn)
 	assert.NoError(t, err)
@@ -89,10 +92,11 @@ func TestScanner(t *testing.T) {
 }
 
 func testWriteGZ(fn string, buf []byte) error {
-	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0644)
+	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		_ = fh.Close()
 	}()
@@ -103,5 +107,6 @@ func testWriteGZ(fn string, buf []byte) error {
 	}()
 
 	_, err = gzw.Write(buf)
+
 	return err
 }

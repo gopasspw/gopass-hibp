@@ -13,11 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/gopass/apimock"
-	hibpapi "github.com/gopasspw/gopass/pkg/hibp/api"
 	"github.com/gopasspw/gopass/tests/gptest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -34,11 +33,15 @@ const testHibpSample = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 00000010F4B38525354491E099EB1796278544B1`
 
 func TestHIBPDump(t *testing.T) {
+	t.Parallel()
+
 	dir, err := ioutil.TempDir("", "gopass-hibp")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %s", err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() {
+		_ = os.RemoveAll(dir)
+	}()
 
 	ctx := context.Background()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
@@ -64,7 +67,7 @@ func TestHIBPDump(t *testing.T) {
 	c = cli.NewContext(app, fs, nil)
 	c.Context = ctx
 
-	assert.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0644))
+	assert.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0o644))
 	assert.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
 
 	// gzip
@@ -85,7 +88,7 @@ func TestHIBPDump(t *testing.T) {
 }
 
 func testWriteGZ(fn string, buf []byte) error {
-	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0644)
+	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -99,13 +102,12 @@ func testWriteGZ(fn string, buf []byte) error {
 	}()
 
 	_, err = gzw.Write(buf)
+
 	return err
 }
 
 func TestHIBPAPI(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
+	t.Parallel()
 
 	ctx := context.Background()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
@@ -121,6 +123,7 @@ func TestHIBPAPI(t *testing.T) {
 		reqCnt++
 		if reqCnt < 2 {
 			http.Error(w, "fake error", http.StatusInternalServerError)
+
 			return
 		}
 		if strings.TrimPrefix(r.URL.String(), "/range/") == "8843D" {
@@ -129,6 +132,7 @@ func TestHIBPAPI(t *testing.T) {
 			fmt.Fprintf(w, "7F92416211DE9EBB963FF4CE28125932878:\n")        // invalid
 			fmt.Fprintf(w, "7F92416211DE9EBB963FF4CE28125932878\n")         // invalid
 			fmt.Fprintf(w, "7F92416211DE9EBB963FF4CE28125932878:3234879\n") // valid
+
 			return
 		}
 		http.Error(w, "not found", http.StatusNotFound)

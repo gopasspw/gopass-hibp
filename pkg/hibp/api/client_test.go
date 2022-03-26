@@ -20,9 +20,7 @@ func Example() {
 }
 
 func TestLookup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
+	t.Parallel()
 
 	match := "match"
 	noMatch := "no match"
@@ -34,6 +32,7 @@ func TestLookup(t *testing.T) {
 		reqCnt++
 		if reqCnt < 2 {
 			http.Error(w, "fake error", http.StatusInternalServerError)
+
 			return
 		}
 		if strings.TrimPrefix(r.URL.String(), "/range/") == matchSum[:5] {
@@ -42,6 +41,7 @@ func TestLookup(t *testing.T) {
 			fmt.Fprintf(w, matchSum[5:]+":\r\n")                  // invalid
 			fmt.Fprintf(w, matchSum[5:]+"\r\n")                   // invalid
 			fmt.Fprintf(w, "%s:%d\r\n", matchSum[5:], matchCount) // valid
+
 			return
 		}
 		http.Error(w, "not found", http.StatusNotFound)
@@ -66,9 +66,7 @@ func TestLookup(t *testing.T) {
 }
 
 func TestLookupCR(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
+	t.Parallel()
 
 	match := "match"
 	noMatch := "no match"
@@ -80,6 +78,7 @@ func TestLookupCR(t *testing.T) {
 		reqCnt++
 		if reqCnt < 2 {
 			http.Error(w, "fake error", http.StatusInternalServerError)
+
 			return
 		}
 		if strings.TrimPrefix(r.URL.String(), "/range/") == matchSum[:5] {
@@ -88,6 +87,7 @@ func TestLookupCR(t *testing.T) {
 			fmt.Fprintf(w, matchSum[5:]+":\n")                  // invalid
 			fmt.Fprintf(w, matchSum[5:]+"\n")                   // invalid
 			fmt.Fprintf(w, "%s:%d\n", matchSum[5:], matchCount) // valid
+
 			return
 		}
 		http.Error(w, "not found", http.StatusNotFound)
@@ -105,8 +105,10 @@ func TestLookupCR(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, uint64(0), count)
 }
+
 func sha1sum(data string) string {
 	h := sha1.New()
 	_, _ = h.Write([]byte(data))
+
 	return fmt.Sprintf("%X", h.Sum(nil))
 }

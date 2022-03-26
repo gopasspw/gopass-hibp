@@ -15,10 +15,8 @@ const (
 	name = "gopass-hibp"
 )
 
-var (
-	// Version is the released version of gopass
-	version string
-)
+// Version is the released version of gopass.
+var version string
 
 func main() {
 	ctx := context.Background()

@@ -3,7 +3,7 @@ module github.com/gopasspw/gopass-hibp
 go 1.18
 
 require (
-	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/fatih/color v1.13.0
 	github.com/gopasspw/gopass v1.14.2
 	github.com/stretchr/testify v1.7.1

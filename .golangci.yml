@@ -45,6 +45,7 @@ linters:
   - maligned
   - nilerr
   - noctx
+  - nosnakecase
   - revive
   - rowserrcheck
   - scopelint

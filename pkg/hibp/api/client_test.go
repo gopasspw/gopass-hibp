@@ -19,9 +19,7 @@ func Example() {
 	fmt.Printf("Number of matches: %d", matches)
 }
 
-func TestLookup(t *testing.T) {
-	t.Parallel()
-
+func TestLookup(t *testing.T) { //nolint:paralleltest
 	match := "match"
 	noMatch := "no match"
 	matchSum := sha1sum(match)
@@ -65,9 +63,7 @@ func TestLookup(t *testing.T) {
 	assert.Equal(t, uint64(0), count)
 }
 
-func TestLookupCR(t *testing.T) {
-	t.Parallel()
-
+func TestLookupCR(t *testing.T) { //nolint:paralleltest
 	match := "match"
 	noMatch := "no match"
 	matchSum := sha1sum(match)

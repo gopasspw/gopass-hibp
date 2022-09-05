@@ -65,7 +65,7 @@ jobs:
     - run: git config --global user.email foo.bar@example.org
       
     - name: Build and Unit Test
-      run: make travis
+      run: make test
 
   macos:
     runs-on: macos-latest

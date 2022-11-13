@@ -56,6 +56,16 @@ func (s *hibp) CheckAPI(ctx context.Context, force bool) error {
 func (s *hibp) CheckDump(ctx context.Context, force bool, dumps []string) error {
 	fmt.Println("Using the HIBPv2 dumps is very expensive. If you can condone leaking a few bits of entropy per secret you should probably use the '--api' flag.")
 
+	if len(dumps) < 1 {
+		return fmt.Errorf("need a least one dump file")
+	}
+
+	// New also checks if there is at least one valid dump file given
+	scanner, err := hibpdump.New(dumps...)
+	if err != nil {
+		return fmt.Errorf("failed to create new HIBP Dump scanner: %w", err)
+	}
+
 	if !force && !termio.AskForConfirmation(ctx, fmt.Sprintf("This command is checking all your secrets against the haveibeenpwned.com hashes in %+v.\nYou will be asked to unlock all your secrets!\nDo you want to continue?", dumps)) {
 		return fmt.Errorf("user aborted")
 	}
@@ -65,10 +75,7 @@ func (s *hibp) CheckDump(ctx context.Context, force bool, dumps []string) error 
 		return err
 	}
 
-	scanner, err := hibpdump.New(dumps...)
-	if err != nil {
-		return fmt.Errorf("failed to create new HIBP Dump scanner: %w", err)
-	}
+	fmt.Println("Checking hashes against the provided dumps. This will take a while.")
 
 	matchedSums := scanner.LookupBatch(ctx, sortedShaSums)
 	debug.Log("In: %+v - Out: %+v", sortedShaSums, matchedSums)

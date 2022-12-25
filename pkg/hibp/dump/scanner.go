@@ -264,12 +264,12 @@ func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, 
 	defer func() {
 		_ = fh.Close()
 	}()
-	rdr = fh
 
-	if strings.HasSuffix(fn, ".gz") {
+	switch {
+	case strings.HasSuffix(fn, ".gz"):
 		gzr, err := gzip.NewReader(fh)
 		if err != nil {
-			fmt.Printf("Failed to open the file %s: %s", fn, err)
+			fmt.Printf("Failed to open the file with gzip %s: %s", fn, err)
 
 			return
 		}
@@ -277,6 +277,30 @@ func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, 
 			_ = gzr.Close()
 		}()
 		rdr = gzr
+	case strings.HasSuffix(fn, ".7z"):
+		arc, err := lzmadec.NewArchive(fn)
+		if err != nil {
+			fmt.Printf("Failed to open the file with 7z %s: %s", fn, err)
+
+			return
+		}
+		if len(arc.Entries) < 1 {
+			fmt.Printf("7z archive %s contains no entries", fn)
+
+			return
+		}
+		rzr, err := arc.GetFileReader(arc.Entries[0].Path)
+		if err != nil {
+			fmt.Printf("Failed open %s in %s for reading: %s", arc.Entries[0].Path, fn, err)
+
+			return
+		}
+		defer func() {
+			_ = rzr.Close()
+		}()
+		rdr = rzr
+	default:
+		rdr = fh
 	}
 
 	lines := make(chan string, 1024)

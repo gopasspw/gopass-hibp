@@ -49,7 +49,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = name
-	app.Version = version
+	app.Version = getVersion().String()
 	app.Usage = "haveibeenpwned.com leak checker for gopass"
 	app.EnableBashCompletion = true
 	app.Commands = []*cli.Command{

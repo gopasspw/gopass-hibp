@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Example() {
+func Example() { //nolint:testableexamples
 	matches, err := Lookup("sha1sum of secret")
 	if err != nil {
 		panic(err)

@@ -34,7 +34,7 @@ const testHibpSampleUnsorted = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 00000001E225B908BAC31C56DB04D892E47536E0:42
 00000010F4B38525354491E099EB1796278544B1`
 
-func Example() {
+func Example() { //nolint:testableexamples
 	ctx := context.Background()
 	scanner, err := New("path/to/hibp-dump")
 	if err != nil {

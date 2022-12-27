@@ -52,17 +52,12 @@ func Example() { //nolint:testableexamples
 func TestScanner(t *testing.T) {
 	t.Parallel()
 
-	td, err := os.MkdirTemp("", "gopass-")
-	require.NoError(t, err)
-
-	defer func() {
-		_ = os.RemoveAll(td)
-	}()
+	td := t.TempDir()
 
 	ctx := context.Background()
 
 	// no hibp dump, no scanner
-	_, err = New()
+	_, err := New()
 	assert.Error(t, err)
 
 	// setup file and env (sorted)
@@ -70,7 +65,7 @@ func TestScanner(t *testing.T) {
 	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleSorted), 0o644))
 
 	scanner, err := New(fn)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{}, scanner.LookupBatch(ctx, []string{"foobar"}))
 
 	// setup file and env (unsorted)
@@ -78,7 +73,7 @@ func TestScanner(t *testing.T) {
 	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleUnsorted), 0o644))
 
 	scanner, err = New(fn)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{}, scanner.LookupBatch(ctx, []string{"foobar"}))
 	assert.Equal(t, []string(nil), scanner.LookupBatch(ctx, []string{}))
 
@@ -87,7 +82,7 @@ func TestScanner(t *testing.T) {
 	assert.NoError(t, testWriteGZ(fn, []byte(testHibpSampleSorted)))
 
 	scanner, err = New(fn)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{}, scanner.LookupBatch(ctx, []string{"foobar"}))
 }
 

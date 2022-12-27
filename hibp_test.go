@@ -33,15 +33,7 @@ const testHibpSample = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 00000010F4B38525354491E099EB1796278544B1`
 
 func TestHIBPDump(t *testing.T) {
-	t.Parallel()
-
-	dir, err := ioutil.TempDir("", "gopass-hibp")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %s", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(dir)
-	}()
+	dir := t.TempDir()
 
 	ctx := context.Background()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
@@ -107,8 +99,6 @@ func testWriteGZ(fn string, buf []byte) error {
 }
 
 func TestHIBPAPI(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
 

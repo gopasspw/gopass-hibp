@@ -52,6 +52,7 @@ func Lookup(shaSum string) (uint64, error) {
 			return fmt.Errorf("HTTP request failed: %s %s", resp.Status, body)
 		}
 
+		debug.Log("Body: %s", string(body))
 		for _, line := range strings.Split(string(body), "\n") {
 			line = strings.TrimSpace(line)
 			if len(line) < 37 {

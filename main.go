@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 
+	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
 	"github.com/urfave/cli/v2"
 )
@@ -92,6 +93,20 @@ func main() {
 				&cli.StringSliceFlag{
 					Name:  "files",
 					Usage: "One or more HIBP v1/v2 dumps",
+				},
+			},
+		},
+		{
+			Name:  "download",
+			Usage: "Download HIBP dumps from the v2 API",
+			Action: func(c *cli.Context) error {
+				return hapi.Download(c.Context, c.String("output"))
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"f"},
+					Usage:   "Output location",
 				},
 			},
 		},

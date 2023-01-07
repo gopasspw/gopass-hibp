@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (s *Scanner) Merge(ctx context.Context, outfile string) error {
+func (s *Scanner) Merge(ctx context.Context, outfile string) error { //nolint:cyclop
 	for _, dump := range s.dumps {
 		if !isSorted(dump) {
 			return fmt.Errorf("merging unsorted input files is not supported.")
@@ -26,10 +26,10 @@ func (s *Scanner) Merge(ctx context.Context, outfile string) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	gzw := gzip.NewWriter(fh)
-	defer gzw.Close()
+	defer gzw.Close() //nolint:errcheck
 
 	resLeft := make(chan string, 1024)
 	resRight := make(chan string, 1024)

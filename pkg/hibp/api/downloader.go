@@ -86,10 +86,10 @@ func joinChunks(dir, path string, keep bool) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	gzw := gzip.NewWriter(fh)
-	defer gzw.Close()
+	defer gzw.Close() //nolint:errcheck
 
 	bar := termio.NewProgressBar(int64(len(dirs)))
 
@@ -124,13 +124,13 @@ func copyChunk(w io.Writer, fn string) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	gzr, err := gzip.NewReader(fh)
 	if err != nil {
 		return err
 	}
-	defer gzr.Close()
+	defer gzr.Close() //nolint:errcheck
 
 	n, err := io.Copy(w, gzr)
 	debug.Log("Copied %d bytes from %s", n, fn)
@@ -153,10 +153,10 @@ func downloadChunk(ctx context.Context, chunk int, dir string, keep bool) error 
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	gzw := gzip.NewWriter(fh)
-	defer gzw.Close()
+	defer gzw.Close() //nolint:errcheck
 
 	url := URL + "/range/" + prefix
 

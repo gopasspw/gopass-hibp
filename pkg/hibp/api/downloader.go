@@ -21,6 +21,8 @@ import (
 )
 
 // Download will download the list of all hashes from the API to a single, gzipped txt file.
+// This is inspired by the "official" .NET based download tool. It does exactly 16⁵ / 1024*1024 (1M) requests
+// to fetch all the possible prefixes.
 func Download(ctx context.Context, path string, keep bool) error {
 	if path == "" {
 		return fmt.Errorf("need output path")
@@ -43,7 +45,7 @@ func Download(ctx context.Context, path string, keep bool) error {
 	bar := termio.NewProgressBar(int64(max))
 	bar.Hidden = ctxutil.IsHidden(ctx)
 
-	sem := make(chan struct{}, runtime.NumCPU()*2)
+	sem := make(chan struct{}, runtime.NumCPU()*4)
 	wg := &sync.WaitGroup{}
 	for i := 0; i < max; i++ {
 		i := i

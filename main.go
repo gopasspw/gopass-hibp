@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 
+	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
+	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
 	"github.com/urfave/cli/v2"
 )
@@ -92,6 +94,48 @@ func main() {
 				&cli.StringSliceFlag{
 					Name:  "files",
 					Usage: "One or more HIBP v1/v2 dumps",
+				},
+			},
+		},
+		{
+			Name:  "download",
+			Usage: "Download HIBP dumps from the v2 API",
+			Action: func(c *cli.Context) error {
+				return hapi.Download(c.Context, c.String("output"), c.Bool("keep"))
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"f"},
+					Usage:   "Output location",
+				},
+				&cli.BoolFlag{
+					Name:    "keep",
+					Aliases: []string{"k"},
+					Usage:   "Keep and re-use partial downloads",
+				},
+			},
+		},
+		{
+			Name:  "merge",
+			Usage: "Merge different dumps",
+			Action: func(c *cli.Context) error {
+				scanner, err := hibpdump.New(c.StringSlice("files")...)
+				if err != nil {
+					return err
+				}
+
+				return scanner.Merge(ctx, c.String("output"))
+			},
+			Flags: []cli.Flag{
+				&cli.StringSliceFlag{
+					Name:  "files",
+					Usage: "One or more HIBP v1/v2 dumps",
+				},
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"f"},
+					Usage:   "Output location",
 				},
 			},
 		},

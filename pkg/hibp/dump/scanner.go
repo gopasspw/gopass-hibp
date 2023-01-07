@@ -227,6 +227,12 @@ SCAN:
 		}
 
 		lineNo++
+		if in == nil {
+			results <- strings.TrimSpace(scanner.Text())
+
+			continue
+		}
+
 		if i >= len(in) {
 			break
 		}

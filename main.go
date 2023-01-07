@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
+	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
 	"github.com/urfave/cli/v2"
 )
@@ -118,7 +119,25 @@ func main() {
 		{
 			Name:  "merge",
 			Usage: "Merge different dumps",
-			// TODO
+			Action: func(c *cli.Context) error {
+				scanner, err := hibpdump.New(c.StringSlice("files")...)
+				if err != nil {
+					return err
+				}
+
+				return scanner.Merge(ctx, c.String("output"))
+			},
+			Flags: []cli.Flag{
+				&cli.StringSliceFlag{
+					Name:  "files",
+					Usage: "One or more HIBP v1/v2 dumps",
+				},
+				&cli.StringFlag{
+					Name:    "output",
+					Aliases: []string{"f"},
+					Usage:   "Output location",
+				},
+			},
 		},
 	}
 

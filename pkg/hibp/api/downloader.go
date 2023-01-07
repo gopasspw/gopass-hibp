@@ -7,21 +7,82 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/debug"
+	"github.com/gopasspw/gopass/pkg/fsutil"
 	"github.com/gopasspw/gopass/pkg/termio"
 )
 
-func Download(ctx context.Context, output string) error {
-	if !strings.HasSuffix(output, ".gz") {
-		output += ".gz"
+// Download will download the list of all hashes from the API to a single, gzipped txt file.
+func Download(ctx context.Context, path string, keep bool) error {
+	if path == "" {
+		return fmt.Errorf("need output path")
+	}
+	if fsutil.IsDir(path) {
+		path = filepath.Join(path, fmt.Sprintf("pwned-passwords-sha1-ordered-by-hash-%s.txt.gz", time.Now().Format("2006-01-02")))
+	}
+	if !strings.HasSuffix(path, ".gz") {
+		path += ".gz"
 	}
 
-	fh, err := os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	dir := filepath.Join(filepath.Dir(path), ".hibp-dl")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+
+	fmt.Printf("Downloading hashes to %s ...", dir)
+
+	max := 1024 * 1024
+	bar := termio.NewProgressBar(int64(max))
+	bar.Hidden = ctxutil.IsHidden(ctx)
+
+	sem := make(chan struct{}, runtime.NumCPU()*2)
+	wg := &sync.WaitGroup{}
+	for i := 0; i < max; i++ {
+		i := i
+		wg.Add(1)
+		go func() {
+			sem <- struct{}{}
+			defer func() {
+				bar.Inc()
+				<-sem
+				wg.Done()
+			}()
+			if err := downloadChunk(ctx, i, dir, keep); err != nil {
+				fmt.Printf("Chunk %d failed: %s", i, err)
+			}
+		}()
+	}
+	wg.Wait()
+	bar.Done()
+
+	fmt.Println("Download done.")
+
+	fmt.Println("Assembling chunks ...")
+
+	if err := joinChunks(dir, path, keep); err != nil {
+		return err
+	}
+
+	fmt.Printf("Chunks assembled at %s\n", path)
+
+	return nil
+}
+
+func joinChunks(dir, path string, keep bool) error {
+	dirs, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	fh, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -30,29 +91,72 @@ func Download(ctx context.Context, output string) error {
 	gzw := gzip.NewWriter(fh)
 	defer gzw.Close()
 
-	return DownloadTo(ctx, gzw)
-}
+	bar := termio.NewProgressBar(int64(len(dirs)))
 
-func DownloadTo(ctx context.Context, w io.Writer) error {
-	max := 1024 * 1024
-	bar := termio.NewProgressBar(int64(max))
-	bar.Hidden = ctxutil.IsHidden(ctx)
-
-	for i := 0; i < max; i++ {
-		if err := downloadChunk(ctx, i, w); err != nil {
+	for _, de := range dirs {
+		// XXXXX.gz
+		if len(de.Name()) != 8 {
+			continue
+		}
+		if strings.HasPrefix(de.Name(), ".") {
+			continue
+		}
+		if !strings.HasSuffix(de.Name(), ".gz") {
+			continue
+		}
+		if err := copyChunk(gzw, filepath.Join(dir, de.Name())); err != nil {
 			return err
 		}
+
 		bar.Inc()
 	}
-
 	bar.Done()
 
-	return nil
+	if keep {
+		return nil
+	}
+
+	return os.RemoveAll(dir)
 }
 
-func downloadChunk(ctx context.Context, chunk int, w io.Writer) error {
+func copyChunk(w io.Writer, fn string) error {
+	fh, err := os.Open(fn)
+	if err != nil {
+		return err
+	}
+	defer fh.Close()
+
+	gzr, err := gzip.NewReader(fh)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	n, err := io.Copy(w, gzr)
+	debug.Log("Copied %d bytes from %s", n, fn)
+
+	return err
+}
+
+func downloadChunk(ctx context.Context, chunk int, dir string, keep bool) error {
 	hex := fmt.Sprintf("%X", chunk)
 	prefix := strings.Repeat("0", 5-len(hex)) + hex
+
+	fn := filepath.Join(dir, prefix+".gz")
+	if keep && fsutil.IsFile(fn) {
+		debug.Log("re-using existing file for chunk #%d: %s", chunk, fn)
+
+		return nil
+	}
+
+	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer fh.Close()
+
+	gzw := gzip.NewWriter(fh)
+	defer gzw.Close()
 
 	url := URL + "/range/" + prefix
 
@@ -84,7 +188,7 @@ func downloadChunk(ctx context.Context, chunk int, w io.Writer) error {
 			if len(line) < 37 {
 				continue
 			}
-			fmt.Fprintf(w, "%s%s\n", prefix, line)
+			fmt.Fprintf(gzw, "%s%s\n", prefix, line)
 		}
 
 		return nil

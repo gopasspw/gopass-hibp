@@ -100,7 +100,7 @@ func main() {
 			Name:  "download",
 			Usage: "Download HIBP dumps from the v2 API",
 			Action: func(c *cli.Context) error {
-				return hapi.Download(c.Context, c.String("output"))
+				return hapi.Download(c.Context, c.String("output"), c.Bool("keep"))
 			},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -108,7 +108,17 @@ func main() {
 					Aliases: []string{"f"},
 					Usage:   "Output location",
 				},
+				&cli.BoolFlag{
+					Name:    "keep",
+					Aliases: []string{"k"},
+					Usage:   "Keep and re-use partial downloads",
+				},
 			},
+		},
+		{
+			Name:  "merge",
+			Usage: "Merge different dumps",
+			// TODO
 		},
 	}
 

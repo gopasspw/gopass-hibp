@@ -6,7 +6,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/fatih/color v1.16.0
-	github.com/gopasspw/gopass v1.15.9
+	github.com/gopasspw/gopass v1.15.10
 	github.com/kjk/lzmadec v0.0.0-20210713164611-19ac3ee91a71
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.25.7
@@ -51,7 +51,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e // indirect
 	github.com/makiuchi-d/gozxing v0.1.1 // indirect
-	github.com/martinhoefling/goxkcdpwgen v0.1.2-0.20221205222637-737661b92a0e // indirect
+	github.com/martinhoefling/goxkcdpwgen v0.1.2-0.20231122080842-e51aa57005ca // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect

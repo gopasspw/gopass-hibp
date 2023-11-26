@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Example() { //nolint:testableexamples
@@ -49,17 +50,17 @@ func TestLookup(t *testing.T) { //nolint:paralleltest
 
 	// test with one entry
 	count, err := Lookup(matchSum)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, matchCount, count)
 
 	// add another one
 	count, err = Lookup(sha1sum(noMatch))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count)
 
 	// invalid input
 	count, err = Lookup("")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, uint64(0), count)
 }
 
@@ -93,12 +94,12 @@ func TestLookupCR(t *testing.T) { //nolint:paralleltest
 
 	// test with one entry
 	count, err := Lookup(matchSum)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, matchCount, count)
 
 	// add another one
 	count, err = Lookup(sha1sum(noMatch))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count)
 }
 

@@ -58,11 +58,11 @@ func TestScanner(t *testing.T) {
 
 	// no hibp dump, no scanner
 	_, err := New()
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// setup file and env (sorted)
 	fn := filepath.Join(td, "dump.txt")
-	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleSorted), 0o644))
+	require.NoError(t, os.WriteFile(fn, []byte(testHibpSampleSorted), 0o644))
 
 	scanner, err := New(fn)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestScanner(t *testing.T) {
 
 	// setup file and env (unsorted)
 	fn = filepath.Join(td, "dump.txt")
-	assert.NoError(t, os.WriteFile(fn, []byte(testHibpSampleUnsorted), 0o644))
+	require.NoError(t, os.WriteFile(fn, []byte(testHibpSampleUnsorted), 0o644))
 
 	scanner, err = New(fn)
 	require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestScanner(t *testing.T) {
 
 	// gzip
 	fn = filepath.Join(td, "dump.txt.gz")
-	assert.NoError(t, testWriteGZ(fn, []byte(testHibpSampleSorted)))
+	require.NoError(t, testWriteGZ(fn, []byte(testHibpSampleSorted)))
 
 	scanner, err = New(fn)
 	require.NoError(t, err)

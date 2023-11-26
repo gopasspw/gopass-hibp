@@ -17,7 +17,7 @@ import (
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/gopass/apimock"
 	"github.com/gopasspw/gopass/tests/gptest"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
 
@@ -54,13 +54,13 @@ func TestHIBPDump(t *testing.T) {
 		Name:  "dumps",
 		Usage: "dumps",
 	}
-	assert.NoError(t, bf.Apply(fs))
-	assert.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
+	require.NoError(t, bf.Apply(fs))
+	require.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
 	c = cli.NewContext(app, fs, nil)
 	c.Context = ctx
 
-	assert.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0o644))
-	assert.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
+	require.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0o644))
+	require.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
 
 	// gzip
 	fn = filepath.Join(dir, "dump.txt.gz")
@@ -69,14 +69,14 @@ func TestHIBPDump(t *testing.T) {
 		Name:  "dumps",
 		Usage: "dumps",
 	}
-	assert.NoError(t, bf.Apply(fs))
-	assert.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
+	require.NoError(t, bf.Apply(fs))
+	require.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
 
 	c = cli.NewContext(app, fs, nil)
 	c.Context = ctx
 
-	assert.NoError(t, testWriteGZ(fn, []byte(testHibpSample)))
-	assert.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
+	require.NoError(t, testWriteGZ(fn, []byte(testHibpSample)))
+	require.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
 }
 
 func testWriteGZ(fn string, buf []byte) error {
@@ -131,9 +131,9 @@ func TestHIBPAPI(t *testing.T) {
 	hibpapi.URL = ts.URL
 
 	// test with one entry
-	assert.NoError(t, act.CheckAPI(c.Context, false))
+	require.NoError(t, act.CheckAPI(c.Context, false))
 
 	// add another one
-	assert.NoError(t, act.gp.Set(ctx, "baz", &apimock.Secret{Buf: []byte("foobar")}))
-	assert.Error(t, act.CheckAPI(c.Context, false))
+	require.NoError(t, act.gp.Set(ctx, "baz", &apimock.Secret{Buf: []byte("foobar")}))
+	require.Error(t, act.CheckAPI(c.Context, false))
 }

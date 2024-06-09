@@ -14,6 +14,10 @@ linters-settings:
   funlen:
     lines: -1
     statements: 100
+  errcheck:
+    exclude-functions:
+      - fmt.Fprintf
+      - fmt.Fprintln
 
 linters:
   enable-all: true
@@ -50,6 +54,7 @@ linters:
   - lll
   - maintidx
   - maligned
+  - mnd
   - musttag
   - nilerr
   - noctx

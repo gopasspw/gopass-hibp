@@ -312,7 +312,7 @@ func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, 
 	lines := make(chan string, 1024)
 	worker := runtime.NumCPU()
 	done := make(chan struct{}, worker)
-	for i := 0; i < worker; i++ {
+	for i := range worker {
 		debug.Log("[%d] Starting matcher ...", i)
 		go s.matcher(ctx, in, lines, results, done)
 	}
@@ -332,7 +332,7 @@ SCAN:
 	}
 	close(lines)
 
-	for i := 0; i < worker; i++ {
+	for range worker {
 		<-done
 	}
 

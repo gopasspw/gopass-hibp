@@ -35,10 +35,10 @@ func TestLookup(t *testing.T) { //nolint:paralleltest
 			return
 		}
 		if strings.TrimPrefix(r.URL.String(), "/range/") == matchSum[:5] {
-			fmt.Fprintf(w, "%s:1\r\n", matchSum[5:10])            // invalid
-			fmt.Fprintf(w, "%s:3234879\r\n", matchSum[5:39])      // invalid
-			fmt.Fprintf(w, "%s:\r\n", matchSum[5:])               // invalid
-			fmt.Fprintf(w, "%s\r\n", matchSum[5:])                // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:10]+":1\r\n")         // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:39]+":3234879\r\n")   // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:]+":\r\n")            // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:]+"\r\n")             // invalid
 			fmt.Fprintf(w, "%s:%d\r\n", matchSum[5:], matchCount) // valid
 
 			return
@@ -79,10 +79,10 @@ func TestLookupCR(t *testing.T) { //nolint:paralleltest
 			return
 		}
 		if strings.TrimPrefix(r.URL.String(), "/range/") == matchSum[:5] {
-			fmt.Fprintf(w, "%s:1\n", matchSum[5:10])            // invalid
-			fmt.Fprintf(w, "%s:3234879\n", matchSum[5:39])      // invalid
-			fmt.Fprintf(w, "%s:\n", matchSum[5:])               // invalid
-			fmt.Fprintf(w, "%s\n", matchSum[5:])                // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:10]+":1\n")         // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:39]+":3234879\n")   // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:]+":\n")            // invalid
+			fmt.Fprintf(w, "%s", matchSum[5:]+"\n")             // invalid
 			fmt.Fprintf(w, "%s:%d\n", matchSum[5:], matchCount) // valid
 
 			return

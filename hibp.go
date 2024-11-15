@@ -122,7 +122,7 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 		// go templates to extract and compare data from the body
 		sec, err := s.gp.Get(ctx, secret, "latest")
 		if err != nil {
-			fmt.Printf("%s\n", color.YellowString("Failed to retrieve secret '%s': %s\n", secret, err))
+			fmt.Printf("%s", "\n"+color.YellowString("Failed to retrieve secret '%s': %s\n", secret, err))
 
 			continue
 		}

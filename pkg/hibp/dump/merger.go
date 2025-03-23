@@ -66,11 +66,11 @@ func (s *Scanner) Merge(ctx context.Context, outfile string) error { //nolint:cy
 			}
 		}
 		if lv[:40] == rv[:40] {
-			max := lv[41:]
-			if rv[41:] > max {
-				max = rv[41:]
+			maxVal := lv[41:]
+			if rv[41:] > maxVal {
+				maxVal = rv[41:]
 			}
-			fmt.Fprintf(gzw, "%s:%s\n", lv[:40], max)
+			fmt.Fprintf(gzw, "%s:%s\n", lv[:40], maxVal)
 
 			continue
 		}

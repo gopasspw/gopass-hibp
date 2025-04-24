@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -35,7 +34,7 @@ const testHibpSample = `000000005AD76BD555C1D6D771DE417A4B87E4B4
 func TestHIBPDump(t *testing.T) {
 	dir := t.TempDir()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
 
 	act := &hibp{
@@ -99,7 +98,7 @@ func testWriteGZ(fn string, buf []byte) error {
 }
 
 func TestHIBPAPI(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ctx = ctxutil.WithAlwaysYes(ctx, true)
 
 	act := &hibp{

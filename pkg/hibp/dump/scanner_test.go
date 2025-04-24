@@ -54,7 +54,7 @@ func TestScanner(t *testing.T) {
 
 	td := t.TempDir()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// no hibp dump, no scanner
 	_, err := New()

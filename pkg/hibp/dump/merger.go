@@ -11,7 +11,7 @@ import (
 func (s *Scanner) Merge(ctx context.Context, outfile string) error { //nolint:cyclop
 	for _, dump := range s.dumps {
 		if !isSorted(dump) {
-			return fmt.Errorf("merging unsorted input files is not supported.")
+			return fmt.Errorf("merging unsorted input files is not supported")
 		}
 	}
 	if len(s.dumps) != 2 {
@@ -66,11 +66,8 @@ func (s *Scanner) Merge(ctx context.Context, outfile string) error { //nolint:cy
 			}
 		}
 		if lv[:40] == rv[:40] {
-			max := lv[41:]
-			if rv[41:] > max {
-				max = rv[41:]
-			}
-			fmt.Fprintf(gzw, "%s:%s\n", lv[:40], max)
+			maxVal := max(rv[41:], lv[41:])
+			fmt.Fprintf(gzw, "%s:%s\n", lv[:40], maxVal)
 
 			continue
 		}

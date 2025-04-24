@@ -41,13 +41,13 @@ func Download(ctx context.Context, path string, keep bool) error {
 
 	fmt.Printf("Downloading hashes to %s ...", dir)
 
-	max := 1024 * 1024
-	bar := termio.NewProgressBar(int64(max))
+	maxVal := 1024 * 1024
+	bar := termio.NewProgressBar(int64(maxVal))
 	bar.Hidden = ctxutil.IsHidden(ctx)
 
 	sem := make(chan struct{}, runtime.NumCPU()*4)
 	wg := &sync.WaitGroup{}
-	for i := range max {
+	for i := range maxVal {
 		wg.Add(1)
 		go func() {
 			sem <- struct{}{}

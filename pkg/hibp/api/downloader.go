@@ -56,7 +56,7 @@ func Download(ctx context.Context, path string, keep bool) error {
 				<-sem
 				wg.Done()
 			}()
-			if err := downloadChunk(ctx, i, dir, keep); err != nil {
+			if err := downloadChunk(i, dir, keep); err != nil {
 				fmt.Printf("Chunk %d failed: %s", i, err)
 			}
 		}()
@@ -139,7 +139,7 @@ func copyChunk(w io.Writer, fn string) error {
 	return err
 }
 
-func downloadChunk(ctx context.Context, chunk int, dir string, keep bool) error {
+func downloadChunk(chunk int, dir string, keep bool) error {
 	hex := fmt.Sprintf("%X", chunk)
 	prefix := strings.Repeat("0", 5-len(hex)) + hex
 

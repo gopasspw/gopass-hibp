@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,9 +14,7 @@ import (
 	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/gopass/apimock"
-	"github.com/gopasspw/gopass/tests/gptest"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
 )
 
 const testHibpSample = `000000005AD76BD555C1D6D771DE417A4B87E4B4
@@ -41,41 +38,17 @@ func TestHIBPDump(t *testing.T) {
 		gp: apimock.New(),
 	}
 
-	app := cli.NewApp()
-	fs := flag.NewFlagSet("default", flag.ContinueOnError)
-	c := cli.NewContext(app, fs, nil)
-	c.Context = ctx
-
 	// setup file and env
 	fn := filepath.Join(dir, "dump.txt")
-	fs = flag.NewFlagSet("default", flag.ContinueOnError)
-	bf := cli.StringSliceFlag{
-		Name:  "dumps",
-		Usage: "dumps",
-	}
-	require.NoError(t, bf.Apply(fs))
-	require.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
-	c = cli.NewContext(app, fs, nil)
-	c.Context = ctx
 
 	require.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0o644))
-	require.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
+	require.NoError(t, act.CheckDump(ctx, false, []string{fn}))
 
 	// gzip
 	fn = filepath.Join(dir, "dump.txt.gz")
-	fs = flag.NewFlagSet("default", flag.ContinueOnError)
-	bf = cli.StringSliceFlag{
-		Name:  "dumps",
-		Usage: "dumps",
-	}
-	require.NoError(t, bf.Apply(fs))
-	require.NoError(t, fs.Parse([]string{"--dumps=" + fn}))
-
-	c = cli.NewContext(app, fs, nil)
-	c.Context = ctx
 
 	require.NoError(t, testWriteGZ(fn, []byte(testHibpSample)))
-	require.NoError(t, act.CheckDump(c.Context, false, []string{fn}))
+	require.NoError(t, act.CheckDump(ctx, false, []string{fn}))
 }
 
 func testWriteGZ(fn string, buf []byte) error {
@@ -105,8 +78,6 @@ func TestHIBPAPI(t *testing.T) {
 		gp: apimock.New(),
 	}
 
-	c := gptest.CliCtxWithFlags(ctx, t, map[string]string{"api": "true"})
-
 	reqCnt := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCnt++
@@ -130,9 +101,9 @@ func TestHIBPAPI(t *testing.T) {
 	hibpapi.URL = ts.URL
 
 	// test with one entry
-	require.NoError(t, act.CheckAPI(c.Context, false))
+	require.NoError(t, act.CheckAPI(ctx, false))
 
 	// add another one
 	require.NoError(t, act.gp.Set(ctx, "baz", &apimock.Secret{Buf: []byte("foobar")}))
-	require.Error(t, act.CheckAPI(c.Context, false))
+	require.Error(t, act.CheckAPI(ctx, false))
 }

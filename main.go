@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
+	hibpdl "github.com/gopasspw/gopass-hibp/pkg/hibp/downloader"
 	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
 	"github.com/urfave/cli/v3"
@@ -73,15 +73,18 @@ func main() {
 				},
 			},
 			{
-				Name:  "dump",
-				Usage: "Detect leaked passwords using the HIBP SHA-1 dumps",
+				Name:   "dump",
+				Usage:  "Detect leaked passwords using local HIBP SHA-1 dumps (deprecated)",
+				Hidden: true,
 				Description: "" +
+					"DEPRECATED: This command is deprecated and will be removed in a future release. " +
+					"The HIBP dumps are not available for download anymore. Please use the 'download' command " +
+					"(a Go re-implementation of the official .NET PwnedPasswords downloader) to obtain a fresh dump.\n\n" +
 					"This command will decrypt all secrets and check the passwords against the " +
-					"havibeenpwned.com SHA-1 dumps (ordered by hash). " +
-					"To use the dumps you need to download the dumps from https://haveibeenpwned.com/passwords first. Be sure to grab the one that says '(ordered by hash)'. " +
+					"local havibeenpwned.com SHA-1 dumps (ordered by hash). " +
 					"This is a very expensive operation, for advanced users. " +
 					"Most users should probably use the API. " +
-					"If you want to use the dumps you need to use 7z to extract the dump: 7z x pwned-passwords-ordered-2.0.txt.7z.",
+					"gzipped and plain text dumps are supported.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					return hibp.CheckDump(ctx, cmd.Bool("force"), cmd.StringSlice("files"))
 				},
@@ -99,15 +102,60 @@ func main() {
 			},
 			{
 				Name:  "download",
-				Usage: "Download HIBP dumps from the v2 API",
+				Usage: "Download HIBP hash ranges from the pwnedpasswords.com range API",
+				Description: "" +
+					"This command downloads all pwned password hash ranges for offline use. " +
+					"It is a Go re-implementation of the official .NET PwnedPasswords downloader.\n\n" +
+					"By default the individual hash ranges are stored in a directory. An ETag based " +
+					"index is maintained so subsequent runs only download changed ranges.\n\n" +
+					"Use --single to write one large file with full hashes instead. The resulting " +
+					"file can be used with the 'dump' command.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					return hapi.Download(ctx, cmd.String("output"), cmd.Bool("keep"))
+					return hibpdl.New().Download(ctx, hibpdl.Settings{
+						Output:      cmd.String("output"),
+						Parallelism: cmd.Int("parallelism"),
+						Overwrite:   cmd.Bool("overwrite"),
+						Single:      cmd.Bool("single"),
+						NTLM:        cmd.Bool("ntlm"),
+						MaxRetries:  int(cmd.Int("max-retries")),
+						Force:       cmd.Bool("force"),
+						Keep:        cmd.Bool("keep"),
+					})
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "output",
 						Aliases: []string{"f"},
 						Usage:   "Output location",
+					},
+					&cli.IntFlag{
+						Name:    "parallelism",
+						Aliases: []string{"p"},
+						Usage:   "Number of parallel requests (defaults to eight times the number of CPUs)",
+					},
+					&cli.BoolFlag{
+						Name:    "overwrite",
+						Aliases: []string{"o"},
+						Usage:   "Overwrite existing files",
+					},
+					&cli.BoolFlag{
+						Name:    "single",
+						Aliases: []string{"s"},
+						Usage:   "Write all hashes into a single file instead of individual files",
+					},
+					&cli.BoolFlag{
+						Name:    "ntlm",
+						Aliases: []string{"n"},
+						Usage:   "Fetch NTLM hashes instead of SHA1",
+					},
+					&cli.IntFlag{
+						Name:  "max-retries",
+						Usage: "Maximum number of retries per prefix (-1 for unlimited, 0 to disable)",
+						Value: -1,
+					},
+					&cli.BoolFlag{
+						Name:  "force",
+						Usage: "Ignore the saved ETags and download every range",
 					},
 					&cli.BoolFlag{
 						Name:    "keep",
@@ -117,8 +165,13 @@ func main() {
 				},
 			},
 			{
-				Name:  "merge",
-				Usage: "Merge different dumps",
+				Name:   "merge",
+				Usage:  "Merge different dumps (deprecated)",
+				Hidden: true,
+				Description: "" +
+					"DEPRECATED: This command is deprecated and will be removed in a future release. " +
+					"It is only useful with manually maintained local dumps.\n\n" +
+					"Merge two sorted HIBP SHA-1 dumps into one.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					scanner, err := hibpdump.New(cmd.StringSlice("files")...)
 					if err != nil {

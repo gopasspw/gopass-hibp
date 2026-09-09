@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -161,10 +162,10 @@ func TestDownloadRangesSubdir(t *testing.T) { //nolint:paralleltest
 func TestDownloadNTLM(t *testing.T) { //nolint:paralleltest
 	setup(t)
 
-	var ntlm bool
+	var ntlm atomic.Bool
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("mode") == "ntlm" {
-			ntlm = true
+			ntlm.Store(true)
 		}
 		body := "0123456789ABCDEF0123456789ABCDEF0:1\r\n"
 		w.Header().Set("Content-MD5", base64.StdEncoding.EncodeToString(md5sum([]byte(body))))
@@ -180,7 +181,7 @@ func TestDownloadNTLM(t *testing.T) { //nolint:paralleltest
 		Parallelism: 2,
 		MaxRetries:  0,
 	}))
-	assert.True(t, ntlm, "expected the ntlm mode to be requested")
+	assert.True(t, ntlm.Load(), "expected the ntlm mode to be requested")
 	assert.FileExists(t, filepath.Join(out, "ntlm.index"))
 }
 
@@ -237,7 +238,7 @@ func TestDownloadErrors(t *testing.T) { //nolint:paralleltest
 	require.NoError(t, os.MkdirAll(dir, 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "foo"), []byte("bar"), 0o644))
 	require.Error(t, New().Download(t.Context(), Settings{
-		Output:     dir,
+		Output:      dir,
 		Parallelism: 2,
 	}))
 
@@ -245,7 +246,7 @@ func TestDownloadErrors(t *testing.T) { //nolint:paralleltest
 	fn := filepath.Join(td, "c")
 	require.NoError(t, os.WriteFile(fn, []byte("bar"), 0o644))
 	require.Error(t, New().Download(t.Context(), Settings{
-		Output:     fn,
+		Output:      fn,
 		Parallelism: 2,
 	}))
 }
@@ -265,7 +266,7 @@ func TestExpandRange(t *testing.T) {
 
 	assert.Equal(t, "00000ABC:1\r\n", string(expandRange("00000", []byte("ABC:1\r\n"))))
 	assert.Equal(t, "00000ABC:1\n", string(expandRange("00000", []byte("ABC:1\n"))))
-	assert.Equal(t, "", string(expandRange("00000", []byte("\n\r\n"))))
+	assert.Empty(t, string(expandRange("00000", []byte("\n\r\n"))))
 	assert.Equal(t, "00000ABC:1\r\n00000DEF:2\r\n", string(expandRange("00000", []byte("ABC:1\r\nDEF:2\r\n"))))
 }
 
@@ -279,7 +280,7 @@ func TestIndex(t *testing.T) {
 	idx, err := LoadIndex(fn, false)
 	require.NoError(t, err)
 	assert.Equal(t, 0, idx.Count())
-	assert.Equal(t, "", idx.Get("00000"))
+	assert.Empty(t, idx.Get("00000"))
 
 	// save and re-load
 	idx.Set("00000", `"foo"`)
@@ -295,7 +296,7 @@ func TestIndex(t *testing.T) {
 
 	// remove
 	idx.Remove("00000")
-	assert.Equal(t, "", idx.Get("00000"))
+	assert.Empty(t, idx.Get("00000"))
 
 	// force load ignores the file
 	idx, err = LoadIndex(fn, true)

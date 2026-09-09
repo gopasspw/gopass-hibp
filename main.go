@@ -117,7 +117,7 @@ func main() {
 						Overwrite:   cmd.Bool("overwrite"),
 						Single:      cmd.Bool("single"),
 						NTLM:        cmd.Bool("ntlm"),
-						MaxRetries:  int(cmd.Int("max-retries")),
+						MaxRetries:  cmd.Int("max-retries"),
 						Force:       cmd.Bool("force"),
 						Keep:        cmd.Bool("keep"),
 					})

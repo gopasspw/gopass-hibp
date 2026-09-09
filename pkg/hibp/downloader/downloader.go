@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -196,10 +197,11 @@ func (d *Downloader) checkOutput(settings Settings) error {
 	return nil
 }
 
-// loadIndex loads the ETag index in directory mode.
+// loadIndex loads the ETag index in directory mode. It returns a nil index
+// (without error) in single file mode.
 func (d *Downloader) loadIndex(settings Settings) (*Index, error) {
 	if settings.Single {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil index is valid in single file mode
 	}
 
 	return LoadIndex(indexPath(settings.Output, settings.NTLM), settings.Force)
@@ -210,6 +212,7 @@ func (d *Downloader) downloadRanges(ctx context.Context, settings Settings, idx 
 	var firstErr atomic.Value
 
 	sem := make(chan struct{}, settings.Parallelism)
+	wg := &sync.WaitGroup{}
 	done := make(chan struct{}, NumRanges)
 	go func() {
 		for range done {
@@ -230,11 +233,13 @@ LOOP:
 		}
 
 		sem <- struct{}{}
+		wg.Add(1)
 
 		go func() {
 			defer func() {
 				<-sem
 				done <- struct{}{}
+				wg.Done()
 			}()
 
 			if err := d.downloadRange(ctx, i, settings, idx); err != nil {
@@ -245,9 +250,7 @@ LOOP:
 	}
 
 	// wait for the remaining workers
-	for range settings.Parallelism {
-		sem <- struct{}{}
-	}
+	wg.Wait()
 	close(done)
 
 	if err, _ := firstErr.Load().(error); err != nil {
@@ -276,9 +279,8 @@ func (d *Downloader) downloadSingle(ctx context.Context, settings Settings, bar 
 	// limit the number of in-flight downloads
 	prodErr := make(chan error, 1)
 	go func() {
-		defer close(results)
-
 		sem := make(chan struct{}, settings.Parallelism)
+		wg := &sync.WaitGroup{}
 
 	LOOP:
 		for i := range NumRanges {
@@ -289,19 +291,20 @@ func (d *Downloader) downloadSingle(ctx context.Context, settings Settings, bar 
 			}
 
 			sem <- struct{}{}
+			wg.Add(1)
 			select {
-			case results <- d.downloadRangeAsync(ctx, i, settings.NTLM, sem):
+			case results <- d.downloadRangeAsync(ctx, i, settings.NTLM, sem, wg):
 			case <-ctx.Done():
 				<-sem
+				wg.Done()
 
 				break LOOP
 			}
 		}
 
 		// wait for the remaining workers
-		for range settings.Parallelism {
-			sem <- struct{}{}
-		}
+		wg.Wait()
+		close(results)
 
 		prodErr <- ctx.Err()
 	}()
@@ -332,12 +335,13 @@ type rangeFuture <-chan *rangeResult
 
 // downloadRangeAsync returns a rangeFuture that will receive the result of
 // the given range download.
-func (d *Downloader) downloadRangeAsync(ctx context.Context, i int, ntlm bool, sem chan struct{}) rangeFuture {
+func (d *Downloader) downloadRangeAsync(ctx context.Context, i int, ntlm bool, sem chan struct{}, wg *sync.WaitGroup) rangeFuture {
 	ch := make(chan *rangeResult, 1)
 
 	go func() {
 		defer func() {
 			<-sem
+			wg.Done()
 		}()
 
 		prefix := rangePrefix(i)

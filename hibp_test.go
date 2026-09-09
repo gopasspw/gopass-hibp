@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -105,4 +106,103 @@ func TestHIBPAPI(t *testing.T) {
 	// add another one
 	require.NoError(t, act.gp.Set(ctx, "baz", &apimock.Secret{Buf: []byte("foobar")}))
 	require.Error(t, act.CheckAPI(ctx, false))
+}
+
+func TestFilterExcludes(t *testing.T) {
+	tests := []struct {
+		name     string
+		excludes string
+		in       []string
+		want     []string
+	}{
+		{
+			name:     "no excludes",
+			excludes: "",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{"secret1", "secret2"},
+		},
+		{
+			name:     "exclude one secret",
+			excludes: "secret1",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{"secret2"},
+		},
+		{
+			name:     "exclude all secrets",
+			excludes: "secret1\nsecret2",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{},
+		},
+		{
+			name:     "exclude with comment",
+			excludes: "# this is a comment\nsecret1",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{"secret2"},
+		},
+		{
+			name:     "exclude with empty lines",
+			excludes: "\nsecret1\n\n",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{"secret2"},
+		},
+		{
+			name:     "exclude with regex",
+			excludes: "secret.*",
+			in:       []string{"secret1", "secret2", "other"},
+			want:     []string{"other"},
+		},
+		{
+			name:     "ignore invalid regex",
+			excludes: "([",
+			in:       []string{"secret1", "secret2"},
+			want:     []string{"secret1", "secret2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := filterExcludes(tt.excludes, tt.in)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestPrecomputeHashesAuditIgnoreFile(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PASSWORD_STORE_DIR", dir)
+
+	ctx := t.Context()
+	act := &hibp{
+		gp: apimock.New(),
+	}
+
+	require.NoError(t, act.gp.Set(ctx, "keep/me", &apimock.Secret{Buf: []byte("hunter2")}))
+	require.NoError(t, act.gp.Set(ctx, "skip/me", &apimock.Secret{Buf: []byte("password1")}))
+	require.NoError(t, act.gp.Set(ctx, "team/service", &apimock.Secret{Buf: []byte("password2")}))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".gopass-audit-ignore"), []byte("# comment\nskip/me\nteam/.*\n(["), 0o644))
+
+	shaSums, sortedShaSums, err := act.precomputeHashes(ctx)
+	require.NoError(t, err)
+	require.Len(t, shaSums, 1)
+	require.Len(t, sortedShaSums, 1)
+
+	names := make([]string, 0, len(shaSums))
+	for _, name := range shaSums {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	require.Equal(t, []string{"keep/me"}, names)
+}
+
+func TestRootStoreDirFromConfig(t *testing.T) {
+	dir := t.TempDir()
+	cfgDir := t.TempDir()
+	cfgPath := filepath.Join(cfgDir, "config")
+
+	require.NoError(t, os.WriteFile(cfgPath, []byte("[mounts]\n\tpath = "+dir+"\n"), 0o644))
+
+	t.Setenv("GOPASS_CONFIG", cfgPath)
+	t.Setenv("PASSWORD_STORE_DIR", filepath.Join(t.TempDir(), "other"))
+
+	require.Equal(t, dir, rootStoreDir())
 }

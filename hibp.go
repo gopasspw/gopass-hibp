@@ -4,13 +4,20 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 	"sort"
+	"strings"
 
+	"github.com/gopasspw/gitconfig"
+	"github.com/gopasspw/gopass/pkg/appdir"
 	"github.com/fatih/color"
 	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/debug"
+	"github.com/gopasspw/gopass/pkg/fsutil"
 	"github.com/gopasspw/gopass/pkg/gopass"
 	"github.com/gopasspw/gopass/pkg/termio"
 )
@@ -97,6 +104,11 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 	if err != nil {
 		return nil, nil, err
 	}
+	nList := filterExcludes(readAuditIgnoreFile(), pwList)
+	if len(nList) < len(pwList) {
+		fmt.Printf("Excluding %d secrets based on .gopass-audit-ignore\n", len(pwList)-len(nList))
+	}
+	pwList = nList
 	// map sha1sum back to secret name for reporting
 	shaSums := make(map[string]string, len(pwList))
 	// build list of sha1sums (must be sorted later!) for stream comparison
@@ -143,6 +155,93 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 	sort.Strings(sortedShaSums)
 
 	return shaSums, sortedShaSums, nil
+}
+
+func readAuditIgnoreFile() string {
+	fn := filepath.Join(rootStoreDir(), ".gopass-audit-ignore")
+	buf, err := os.ReadFile(fn)
+	if err != nil {
+		return ""
+	}
+
+	return string(buf)
+}
+
+func rootStoreDir() string {
+	for _, configPath := range []string{
+		os.Getenv("GOPASS_CONFIG"),
+		filepath.Join(appdir.UserConfig(), "config"),
+		"/etc/gopass/config",
+	} {
+		if p := configMountPath(configPath); p != "" {
+			return p
+		}
+	}
+
+	if d := os.Getenv("PASSWORD_STORE_DIR"); d != "" {
+		return fsutil.CleanPath(d)
+	}
+
+	if ld := filepath.Join(appdir.UserHome(), ".password-store"); fsutil.IsDir(ld) {
+		return ld
+	}
+
+	return fsutil.CleanPath(filepath.Join(appdir.UserData(), "stores", "root"))
+}
+
+func configMountPath(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	cfg, err := gitconfig.LoadConfig(path)
+	if err != nil {
+		return ""
+	}
+
+	if p, ok := cfg.Get("mounts.path"); ok && p != "" {
+		return fsutil.CleanPath(p)
+	}
+
+	return ""
+}
+
+func filterExcludes(excludes string, in []string) []string {
+	res := make([]*regexp.Regexp, 0, strings.Count(excludes, "\n")+1)
+	for _, line := range strings.Split(excludes, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		re, err := regexp.Compile(line)
+		if err != nil {
+			debug.Log("failed to compile exclude pattern %q: %s", line, err)
+
+			continue
+		}
+		res = append(res, re)
+	}
+
+	if len(res) < 1 {
+		return in
+	}
+
+	out := make([]string, 0, len(in))
+	for _, s := range in {
+		matched := false
+		for _, re := range res {
+			if re.MatchString(s) {
+				matched = true
+
+				break
+			}
+		}
+		if !matched {
+			out = append(out, s)
+		}
+	}
+
+	return out
 }
 
 func (s *hibp) printMatches(matchList []string) error {

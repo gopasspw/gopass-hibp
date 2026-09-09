@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gopasspw/gitconfig"
-	"github.com/gopasspw/gopass/pkg/appdir"
 	"github.com/fatih/color"
+	"github.com/gopasspw/gitconfig"
 	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
+	"github.com/gopasspw/gopass/pkg/appdir"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/debug"
 	"github.com/gopasspw/gopass/pkg/fsutil"

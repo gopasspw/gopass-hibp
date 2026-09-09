@@ -3,7 +3,6 @@ package main
 import (
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -41,7 +40,7 @@ func TestHIBPDump(t *testing.T) {
 	// setup file and env
 	fn := filepath.Join(dir, "dump.txt")
 
-	require.NoError(t, ioutil.WriteFile(fn, []byte(testHibpSample), 0o644))
+	require.NoError(t, os.WriteFile(fn, []byte(testHibpSample), 0o644))
 	require.NoError(t, act.CheckDump(ctx, false, []string{fn}))
 
 	// gzip

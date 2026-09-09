@@ -1,3 +1,12 @@
+## unreleased
+
+- Deprecate and hide the `dump` and `merge` commands working on local HIBP
+  dump files. They are kept for users that still have (possibly manually
+  curated) local dumps around, but will be removed in a future release.
+  Use the `download` command (which uses the same approach as the official
+  .NET PwnedPasswords downloader) to obtain a fresh dump instead.
+- Drop sevenzip support and the dead `github.com/kjk/lzmadec` dependency.
+
 ## 1.17.0
 
 - Bump dependencies to gopass release v1.17.0

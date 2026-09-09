@@ -73,15 +73,18 @@ func main() {
 				},
 			},
 			{
-				Name:  "dump",
-				Usage: "Detect leaked passwords using the HIBP SHA-1 dumps",
+				Name:   "dump",
+				Usage:  "Detect leaked passwords using local HIBP SHA-1 dumps (deprecated)",
+				Hidden: true,
 				Description: "" +
+					"DEPRECATED: This command is deprecated and will be removed in a future release. " +
+					"The HIBP dumps are not available for download anymore. Please use the 'download' command " +
+					"(which uses the same approach as the official .NET PwnedPasswords downloader) to obtain a fresh dump.\n\n" +
 					"This command will decrypt all secrets and check the passwords against the " +
-					"havibeenpwned.com SHA-1 dumps (ordered by hash). " +
-					"To use the dumps you need to download the dumps from https://haveibeenpwned.com/passwords first. Be sure to grab the one that says '(ordered by hash)'. " +
+					"local havibeenpwned.com SHA-1 dumps (ordered by hash). " +
 					"This is a very expensive operation, for advanced users. " +
 					"Most users should probably use the API. " +
-					"If you want to use the dumps you need to use 7z to extract the dump: 7z x pwned-passwords-ordered-2.0.txt.7z.",
+					"gzipped and plain text dumps are supported.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					return hibp.CheckDump(ctx, cmd.Bool("force"), cmd.StringSlice("files"))
 				},
@@ -100,6 +103,10 @@ func main() {
 			{
 				Name:  "download",
 				Usage: "Download HIBP dumps from the v2 API",
+				Description: "" +
+					"This command downloads all pwned password hashes from the pwnedpasswords.com range API " +
+					"into a single, gzipped dump (ordered by hash). It uses the same approach as the official " +
+					".NET PwnedPasswords downloader. The resulting file can be used with the 'dump' command.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					return hapi.Download(ctx, cmd.String("output"), cmd.Bool("keep"))
 				},
@@ -117,8 +124,13 @@ func main() {
 				},
 			},
 			{
-				Name:  "merge",
-				Usage: "Merge different dumps",
+				Name:   "merge",
+				Usage:  "Merge different dumps (deprecated)",
+				Hidden: true,
+				Description: "" +
+					"DEPRECATED: This command is deprecated and will be removed in a future release. " +
+					"It is only useful with manually maintained local dumps.\n\n" +
+					"Merge two sorted HIBP SHA-1 dumps into one.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					scanner, err := hibpdump.New(cmd.StringSlice("files")...)
 					if err != nil {

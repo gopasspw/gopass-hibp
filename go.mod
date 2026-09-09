@@ -7,7 +7,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.19.0
 	github.com/gopasspw/gopass v1.17.0
-	github.com/kjk/lzmadec v0.0.0-20210713164611-19ac3ee91a71
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v3 v3.11.0
 )

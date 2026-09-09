@@ -3,8 +3,13 @@
 // dumps ordered by prevalence, too. But processing those will take much, much
 // longer.
 //
-// Unfortunately these dumps need to be unpacked before use, since there is no
-// 7z implementation for Go at the time of this writing.
+// The HIBP dumps are not available for download anymore. This package is kept
+// for users that still have local dumps around (possibly manually curated).
+// Consider using the "download" command and the online API instead.
+//
+// Unfortunately these dumps need to be unpacked before use. Only plain text
+// and gzip compressed dumps are supported. Use 7z to extract the dumps and
+// (re-)compress them with gzip if necessary.
 package dump
 
 import (
@@ -20,7 +25,6 @@ import (
 
 	"github.com/gopasspw/gopass/pkg/debug"
 	"github.com/gopasspw/gopass/pkg/fsutil"
-	"github.com/kjk/lzmadec"
 )
 
 // Scanner is a HIBP dump scanner.
@@ -98,45 +102,49 @@ func (s *Scanner) scanFile(ctx context.Context, fn string, in []string, results 
 	s.scanUnsortedFile(ctx, fn, in, results)
 }
 
-func isSorted(fn string) bool {
-	var rdr io.Reader
+// open opens the given dump file for reading. gzip compressed dumps are
+// transparently decompressed.
+func open(fn string) (io.ReadCloser, error) {
 	fh, err := os.Open(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.HasSuffix(fn, ".gz") {
+		return fh, nil
+	}
+
+	gzr, err := gzip.NewReader(fh)
+	if err != nil {
+		_ = fh.Close()
+
+		return nil, err
+	}
+
+	return &readCloser{Reader: gzr, closers: []io.Closer{gzr, fh}}, nil
+}
+
+type readCloser struct {
+	io.Reader
+	closers []io.Closer
+}
+
+func (rc *readCloser) Close() error {
+	for _, c := range rc.closers {
+		_ = c.Close()
+	}
+
+	return nil
+}
+
+func isSorted(fn string) bool {
+	rdr, err := open(fn)
 	if err != nil {
 		return false
 	}
 	defer func() {
-		_ = fh.Close()
+		_ = rdr.Close()
 	}()
-
-	switch {
-	case strings.HasSuffix(fn, ".gz"):
-		gzr, err := gzip.NewReader(fh)
-		if err != nil {
-			return false
-		}
-		defer func() {
-			_ = gzr.Close()
-		}()
-		rdr = gzr
-	case strings.HasSuffix(fn, ".7z"):
-		arc, err := lzmadec.NewArchive(fn)
-		if err != nil {
-			return false
-		}
-		if len(arc.Entries) < 1 {
-			return false
-		}
-		rzr, err := arc.GetFileReader(arc.Entries[0].Path)
-		if err != nil {
-			return false
-		}
-		defer func() {
-			_ = rzr.Close()
-		}()
-		rdr = rzr
-	default:
-		rdr = fh
-	}
 
 	lineNo := 0
 	lastLine := ""
@@ -161,54 +169,15 @@ func isSorted(fn string) bool {
 }
 
 func (s *Scanner) scanSortedFile(ctx context.Context, fn string, in []string, results chan string) {
-	var rdr io.Reader
-	fh, err := os.Open(fn)
+	rdr, err := open(fn)
 	if err != nil {
 		fmt.Printf("Failed to open file %s: %s", fn, err)
 
 		return
 	}
 	defer func() {
-		_ = fh.Close()
+		_ = rdr.Close()
 	}()
-
-	switch {
-	case strings.HasSuffix(fn, ".gz"):
-		gzr, err := gzip.NewReader(fh)
-		if err != nil {
-			fmt.Printf("Failed to open the file with gzip %s: %s", fn, err)
-
-			return
-		}
-		defer func() {
-			_ = gzr.Close()
-		}()
-		rdr = gzr
-	case strings.HasSuffix(fn, ".7z"):
-		arc, err := lzmadec.NewArchive(fn)
-		if err != nil {
-			fmt.Printf("Failed to open the file with 7z %s: %s", fn, err)
-
-			return
-		}
-		if len(arc.Entries) < 1 {
-			fmt.Printf("7z archive %s contains no entries", fn)
-
-			return
-		}
-		rzr, err := arc.GetFileReader(arc.Entries[0].Path)
-		if err != nil {
-			fmt.Printf("Failed open %s in %s for reading: %s", arc.Entries[0].Path, fn, err)
-
-			return
-		}
-		defer func() {
-			_ = rzr.Close()
-		}()
-		rdr = rzr
-	default:
-		rdr = fh
-	}
 
 	debug.Log("Checking file %s ...\n", fn)
 
@@ -260,54 +229,15 @@ SCAN:
 }
 
 func (s *Scanner) scanUnsortedFile(ctx context.Context, fn string, in []string, results chan string) {
-	var rdr io.Reader
-	fh, err := os.Open(fn)
+	rdr, err := open(fn)
 	if err != nil {
 		fmt.Printf("Failed to open file %s: %s", fn, err)
 
 		return
 	}
 	defer func() {
-		_ = fh.Close()
+		_ = rdr.Close()
 	}()
-
-	switch {
-	case strings.HasSuffix(fn, ".gz"):
-		gzr, err := gzip.NewReader(fh)
-		if err != nil {
-			fmt.Printf("Failed to open the file with gzip %s: %s", fn, err)
-
-			return
-		}
-		defer func() {
-			_ = gzr.Close()
-		}()
-		rdr = gzr
-	case strings.HasSuffix(fn, ".7z"):
-		arc, err := lzmadec.NewArchive(fn)
-		if err != nil {
-			fmt.Printf("Failed to open the file with 7z %s: %s", fn, err)
-
-			return
-		}
-		if len(arc.Entries) < 1 {
-			fmt.Printf("7z archive %s contains no entries", fn)
-
-			return
-		}
-		rzr, err := arc.GetFileReader(arc.Entries[0].Path)
-		if err != nil {
-			fmt.Printf("Failed open %s in %s for reading: %s", arc.Entries[0].Path, fn, err)
-
-			return
-		}
-		defer func() {
-			_ = rzr.Close()
-		}()
-		rdr = rzr
-	default:
-		rdr = fh
-	}
 
 	lines := make(chan string, 1024)
 	worker := runtime.NumCPU()

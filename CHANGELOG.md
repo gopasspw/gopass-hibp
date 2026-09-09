@@ -1,13 +1,10 @@
 ## unreleased
 
-- Re-implement the official .NET PwnedPasswords downloader in Go (pkg/hibp/downloader)
-  and use it for the `download` command. The new downloader supports downloading
-  hash ranges into a directory of individual files with an ETag based index
-  (subsequent runs only download changed ranges) or into a single file with
-  full hashes (`--single`).
 - Deprecate and hide the `dump` and `merge` commands working on local HIBP
   dump files. They are kept for users that still have (possibly manually
   curated) local dumps around, but will be removed in a future release.
+  Use the `download` command (which uses the same approach as the official
+  .NET PwnedPasswords downloader) to obtain a fresh dump instead.
 - Drop sevenzip support and the dead `github.com/kjk/lzmadec` dependency.
 
 ## 1.17.0

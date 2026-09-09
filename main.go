@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	hibpdl "github.com/gopasspw/gopass-hibp/pkg/hibp/downloader"
+	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
 	"github.com/urfave/cli/v3"
@@ -79,7 +79,7 @@ func main() {
 				Description: "" +
 					"DEPRECATED: This command is deprecated and will be removed in a future release. " +
 					"The HIBP dumps are not available for download anymore. Please use the 'download' command " +
-					"(a Go re-implementation of the official .NET PwnedPasswords downloader) to obtain a fresh dump.\n\n" +
+					"(which uses the same approach as the official .NET PwnedPasswords downloader) to obtain a fresh dump.\n\n" +
 					"This command will decrypt all secrets and check the passwords against the " +
 					"local havibeenpwned.com SHA-1 dumps (ordered by hash). " +
 					"This is a very expensive operation, for advanced users. " +
@@ -102,60 +102,19 @@ func main() {
 			},
 			{
 				Name:  "download",
-				Usage: "Download HIBP hash ranges from the pwnedpasswords.com range API",
+				Usage: "Download HIBP dumps from the v2 API",
 				Description: "" +
-					"This command downloads all pwned password hash ranges for offline use. " +
-					"It is a Go re-implementation of the official .NET PwnedPasswords downloader.\n\n" +
-					"By default the individual hash ranges are stored in a directory. An ETag based " +
-					"index is maintained so subsequent runs only download changed ranges.\n\n" +
-					"Use --single to write one large file with full hashes instead. The resulting " +
-					"file can be used with the 'dump' command.",
+					"This command downloads all pwned password hashes from the pwnedpasswords.com range API " +
+					"into a single, gzipped dump (ordered by hash). It uses the same approach as the official " +
+					".NET PwnedPasswords downloader. The resulting file can be used with the 'dump' command.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					return hibpdl.New().Download(ctx, hibpdl.Settings{
-						Output:      cmd.String("output"),
-						Parallelism: cmd.Int("parallelism"),
-						Overwrite:   cmd.Bool("overwrite"),
-						Single:      cmd.Bool("single"),
-						NTLM:        cmd.Bool("ntlm"),
-						MaxRetries:  cmd.Int("max-retries"),
-						Force:       cmd.Bool("force"),
-						Keep:        cmd.Bool("keep"),
-					})
+					return hapi.Download(ctx, cmd.String("output"), cmd.Bool("keep"))
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "output",
 						Aliases: []string{"f"},
 						Usage:   "Output location",
-					},
-					&cli.IntFlag{
-						Name:    "parallelism",
-						Aliases: []string{"p"},
-						Usage:   "Number of parallel requests (defaults to eight times the number of CPUs)",
-					},
-					&cli.BoolFlag{
-						Name:    "overwrite",
-						Aliases: []string{"o"},
-						Usage:   "Overwrite existing files",
-					},
-					&cli.BoolFlag{
-						Name:    "single",
-						Aliases: []string{"s"},
-						Usage:   "Write all hashes into a single file instead of individual files",
-					},
-					&cli.BoolFlag{
-						Name:    "ntlm",
-						Aliases: []string{"n"},
-						Usage:   "Fetch NTLM hashes instead of SHA1",
-					},
-					&cli.IntFlag{
-						Name:  "max-retries",
-						Usage: "Maximum number of retries per prefix (-1 for unlimited, 0 to disable)",
-						Value: -1,
-					},
-					&cli.BoolFlag{
-						Name:  "force",
-						Usage: "Ignore the saved ETags and download every range",
 					},
 					&cli.BoolFlag{
 						Name:    "keep",

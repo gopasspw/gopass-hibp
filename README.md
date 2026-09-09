@@ -23,22 +23,17 @@ go install github.com/gopasspw/gopass-hibp@latest
 If you want to use the offline mode you need to obtain a copy of the HIBP hashes first.
 The dumps are not available for download from the [official sources](https://haveibeenpwned.com/Passwords) anymore.
 
-Instead use the built-in downloader. It is a Go re-implementation of the
+Instead use the built-in downloader. It uses the same approach as the
 [official .NET downloader](https://github.com/HaveIBeenPwned/PwnedPasswordsDownloader)
-and downloads all hash ranges from the pwnedpasswords.com range API.
+and downloads all hashes from the pwnedpasswords.com range API into a single, gzipped dump
+(ordered by hash).
 
 ```bash
-# download all hash ranges into a directory of individual files
-# (an ETag based index makes subsequent runs only download changed ranges)
-gopass-hibp download --output /some/folder/with/40G/pwnedpasswords
-
-# or download everything into one large file with full hashes
-# (suitable for use with the "dump" command)
-gopass-hibp download --single --output /some/folder/with/40G/pwnedpasswords.txt
+gopass-hibp download --output /some/folder/with/40G/dump.txt.gz
 ```
 
-The output will be around 40GB in size. The download itself makes about one million requests,
-one per possible hash prefix.
+The data will be downloaded into a million chunks first and then assembled to a large file later.
+The output file will be around 18GB in size. During assembly of the chunks it will use twice that space for a short time.
 
 ### Legacy dumps
 

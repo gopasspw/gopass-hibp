@@ -165,6 +165,10 @@ func isSorted(fn string) bool {
 		lastLine = line
 	}
 
+	if scanner.Err() != nil {
+		fmt.Printf("Failed to scan file %s: %s", fn, scanner.Err())
+	}
+
 	return true
 }
 
@@ -225,6 +229,10 @@ SCAN:
 		}
 	}
 
+	if scanner.Err() != nil {
+		fmt.Printf("Failed to scan file %s: %s", fn, scanner.Err())
+	}
+
 	debug.Log("Finished checking file %s", fn)
 }
 
@@ -264,6 +272,10 @@ SCAN:
 
 	for range worker {
 		<-done
+	}
+
+	if scanner.Err() != nil {
+		fmt.Printf("Failed to scan file %s: %s", fn, scanner.Err())
 	}
 
 	debug.Log("Finished checking file %s", fn)

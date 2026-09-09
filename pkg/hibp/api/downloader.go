@@ -56,6 +56,12 @@ func Download(ctx context.Context, path string, keep bool) error {
 				<-sem
 				wg.Done()
 			}()
+			// check for context cancelation
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 			if err := downloadChunk(i, dir, keep); err != nil {
 				fmt.Printf("Chunk %d failed: %s", i, err)
 			}
@@ -63,6 +69,13 @@ func Download(ctx context.Context, path string, keep bool) error {
 	}
 	wg.Wait()
 	bar.Done()
+
+	// check for context cancelation
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("user aborted")
+	default:
+	}
 
 	fmt.Println("Download done.")
 

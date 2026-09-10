@@ -1,3 +1,7 @@
+## 1.17.2
+
+- Bump dependencies to gopass release v1.17.2
+
 ## unreleased
 
 - Deprecate and hide the `dump` and `merge` commands working on local HIBP

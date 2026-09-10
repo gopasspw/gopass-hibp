@@ -6,7 +6,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/fatih/color v1.19.0
-	github.com/gopasspw/gopass v1.17.1
+	github.com/gopasspw/gopass v1.17.2
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v3 v3.11.0
 )

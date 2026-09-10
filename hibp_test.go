@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	hibpapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
 	"github.com/gopasspw/gopass/pkg/ctxutil"
 	"github.com/gopasspw/gopass/pkg/gopass/apimock"
+	hibpapi "github.com/gopasspw/gopass/pkg/hibp/api"
 	"github.com/stretchr/testify/require"
 )
 

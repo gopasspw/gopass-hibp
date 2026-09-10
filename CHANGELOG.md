@@ -4,6 +4,8 @@
 
 ## unreleased
 
+- Use the HIBP client from `gopass/pkg/hibp` instead of a local copy, removing
+  the module dependency cycle.
 - Deprecate and hide the `dump` and `merge` commands working on local HIBP
   dump files. They are kept for users that still have (possibly manually
   curated) local dumps around, but will be removed in a future release.

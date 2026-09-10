@@ -7,9 +7,9 @@ import (
 	"os"
 	"os/signal"
 
-	hapi "github.com/gopasspw/gopass-hibp/pkg/hibp/api"
-	hibpdump "github.com/gopasspw/gopass-hibp/pkg/hibp/dump"
 	"github.com/gopasspw/gopass/pkg/gopass/api"
+	hapi "github.com/gopasspw/gopass/pkg/hibp/api"
+	hibpdump "github.com/gopasspw/gopass/pkg/hibp/dump"
 	"github.com/urfave/cli/v3"
 )
 

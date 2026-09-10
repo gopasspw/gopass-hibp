@@ -93,7 +93,7 @@ func (s *hibp) precomputeHashes(ctx context.Context) (map[string]string, []strin
 	// build a map of all secrets sha sums to their names and also build a sorted (!)
 	// list of this shasums. As the hibp dump is already sorted this allows for
 	// a very efficient stream compare in O(n)
-	pwList, err := s.gp.List(ctx)
+	pwList, err := s.gp.AuditList(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
